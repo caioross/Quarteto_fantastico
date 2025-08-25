@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template_string
 import pandas as pd
 import sqlite3
 import plotly.express as px
@@ -22,8 +22,121 @@ dfAvengers.to_sql("vingadores", conn, if_exists="replace", index=False)
 conn.commit()
 conn.close()
 
+html_template = '''
+    <h1>Dashboard - Consumo de Alcool</h1>
+    <h2>Parte 01</h2>
+    <ul>
+        <li><a href="/grafico1">Top 10 paises em consumo de alcool</a></li>
+        <li><a href="/grafico2">Media de consumo por tipo de bebida</a></li>
+        <li><a href="/grafico3">Consumo total por regiao</a></li>
+        <li><a href="/grafico4">Comparativo entre tipos de bebidas</a></li>
+        <li><a href="/pais?nome=Brazil">Insights por pais (Brasil)</a></li>
+    </ul>
+    <h2>Parte 02</h2>
+    <ul>
+        <li><a href="/comparar">Comparar</a></li>
+        <li><a href="/upload_avengers">Upload CSV</a></li>
+        <li><a href="/apagar_avengers">Apagar tabela Avengers</a></li>
+        <li><a href="/atribuir_paises_avengers">Atribuir Paises</a></li>
+        <li><a href="/ver_tabela">Ver Tabela Avengers</a></li>
+        <li><a href="/consultar_avengers">Consultar detalhes do Vingador</a></li>
+        <li><a href="/avengers_vs_drinks">V.A.A (Vingadores Alcoólicos Anonimos)</a></li>
+    </ul>
+'''
+
 #iniciar o flask
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template_string(html_template)
+
+@app.route('/grafico1')
+def grafico1():
+    with sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db") as conn:
+        df = pd.read_sql_query("""
+            SELECT country, total_litres_of_pure_alcohol
+            FROM bebidas
+            ORDER BY total_litres_of_pure_alcohol DESC
+            LIMIT 10
+        """, conn)
+    figuraGrafico01 = px.bar(
+        df, 
+        x="country",
+        y="total_litres_of_pure_alcohol",
+        title="Top 10 paises com maior consumo de alcool"
+    )
+    return figuraGrafico01.to_html()
+
+#media por ti´po global
+@app.route('/grafico2')
+def grafico2():
+    with sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db") as conn:
+        df = pd.read_sql_query("""
+            SELECT AVG(beer_servings) AS cerveja, AVG(spirit_servings) AS destilados, AVG(wine_servings) AS vinhos FROM bebidas
+        """, conn)
+#transforma as colunas (cerveja, destilados, vinhos) em linhas criando duas colunas:
+#uma chamada bebidas com os nomes originais das colunas
+# e outra chama media de porções com os valores correspondentes
+    df_melted = df.melt(var_name='Bebidas', value_name='Média de Porções')
+    figuraGrafico02 = px.bar(
+        df_melted,
+        x="Bebidas",
+        y="Média de Porções",
+        title="Média de consumo global por tipo"
+    )
+    return figuraGrafico02.to_html()
+
+#grafico 3: consumo por região
+@app.route('/grafico3')
+def grafico3():
+    regioes = {
+        "Europa":['France','Germany','Italy','Spain','Portugal'],
+        "Asia":['China','Japan','India','Thailand'],
+        "Africa":['Angola','Nigeria','Egypt','Algeria'],
+        "Americas":['USA','Brazil','Canada','Argentina','Mexico']
+    }
+    dados=[]
+    with sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db") as conn:
+        # itera sobre o dicionario de regioes onde cada chave (região) tem uma lista de paises
+        for regiao, paises in regioes.items():
+            #criando a lista de placeholders para os paises dessa região no formato "pais1", pais2...
+            #isso vai ser utilizado na consulta sql para filtrar os paises da região  
+            placeholders = ",".join([f"'{p}'" for p in paises])
+            query = f"""
+                SELECT SUM(total_litres_of_pure_alcohol) AS total
+                FROM bebidas
+                WHERE country IN ({placeholders})
+            """
+            # como a consulta vai retornar um unico valor (soma) pegamos o primeiro valor usando o [0] se o resultado for none (sem dados) retornamos 0 para evitar erros
+            total = pd.read_sql_query(query, conn).iloc[0]
+            # adicionar o resultado ao dicionario 'dados', para cada região com o consumo total calculado
+            dados.append({"Região": regiao, "Consumo Total": total})
+    dfRegioes = pd.DataFrame(dados)
+    figuraGrafico3 = px.pie(
+        dfRegioes,
+        names="Região",
+        values="Consumo Total",
+        title = "Consumo total por Região"
+        )
+    return figuraGrafico3.to_html() + "<br><a href='/'>Voltar</a>"
+
+#grafico 4 comparativo entre os tipos de bebidas
+@app.route('/grafico4')
+def grafico4():
+    with sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db") as conn:
+        df = pd.read_sql_query("""
+        SELECT beer_servings, spirit_servings, wine_servings FROM bebidas
+        """,conn)
+        medias = df.mean().reset_index()
+        medias.columns = ['Tipo','Média']
+        figuraGrafico4 = px.pie(
+            medias,
+            names='Tipo',
+            values='Média',
+            title='Proporção média entre os tipos de bebidas'
+        )
+        return figuraGrafico4.to_html() + "<br><a href='/'>Voltar</a>"
 
 #iniciar o servidor 
 if __name__ == '__main__':
