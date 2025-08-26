@@ -44,6 +44,7 @@ html_template = '''
     </ul>
 '''
 
+
 #iniciar o flask
 app = Flask(__name__)
 
@@ -109,7 +110,7 @@ def grafico3():
                 WHERE country IN ({placeholders})
             """
             # como a consulta vai retornar um unico valor (soma) pegamos o primeiro valor usando o [0] se o resultado for none (sem dados) retornamos 0 para evitar erros
-            total = pd.read_sql_query(query, conn).iloc[0]
+            total = pd.read_sql_query(query, conn).iloc[0,0]
             # adicionar o resultado ao dicionario 'dados', para cada região com o consumo total calculado
             dados.append({"Região": regiao, "Consumo Total": total})
     dfRegioes = pd.DataFrame(dados)
@@ -138,6 +139,72 @@ def grafico4():
         )
         return figuraGrafico4.to_html() + "<br><a href='/'>Voltar</a>"
 
+@app.route("/comparar", methods=['GET','POST'])
+def comparar():
+    opcoes = ['beer_servings','spirit_servings','wine_servings', 'total_litres_of_pure_alcohol']
+
+    if request.method == "POST":
+        #logica para mostrar o grafico quando tem post ao acessar a página
+        eixo_x = request.form.get('eixo_x')
+        eixo_y = request.form.get('eixo_y')
+        if eixo_x == eixo_y:
+            return "<h3>Selecione campos diferentes!</h3>"
+        
+        conn = sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db")
+        df = pd.read_sql_query("SELECT country, {}, {} FROM bebidas".format(eixo_x,eixo_y), conn)
+        conn.close()
+        figuraComparar = px.scatter(
+            df,
+            x = eixo_x,
+            y = eixo_y,
+            title= f'Comparação entre {eixo_x} e {eixo_y}'
+        )
+        figuraComparar.update_traces(textposition='top center')
+        return figuraComparar.to_html() + "<br><a href='/'>Voltar</a>"
+
+    #aqui é a pagina sem post, ou seja, a primeira vez que o usuario entrar na pagina
+    return render_template_string('''
+        <h2>Comparar Campos</h2>
+        <form method="POST">
+            <label>Eixo X:</label>
+            <select name="eixo_x">
+                {% for opcao in opcoes %}  
+                    <option value="{{opcao}}">{{opcao}}</option> 
+                {% endfor %}                  
+            </select>
+            <br><br>                 
+            <label>Eixo Y:</label>
+            <select name="eixo_y">
+                {% for opcao in opcoes %}  
+                    <option value="{{opcao}}">{{opcao}}</option> 
+                {% endfor %}  
+            </select>
+            <br><br>
+            <input type="submit" value="-- Comparar --">
+        </form>
+    ''', opcoes = opcoes)
+
+@app.route("/upload_avengers", methods=['GET','POST'])
+def upload_avengers():
+    if request.method == "POST":
+        #recebi um arquivo (temos o post), então vamos cadastrar no banco
+        recebido = request.files['arquivo']
+        if not recebido:
+            return "<h3>Nenhum arquivo recebido</h3><br><a href='/upload_avengers'>Voltar</a>"
+        dfAvengers = pd.read_csv(recebido, encoding='latin1')
+        conn = sqlite3.connect(r"C:\Users\integral\Desktop\Python 2 Caio\bancodados.db")
+        dfAvengers.to_sql("vingadores", conn, if_exists="replace", index=False)
+        conn.commit()
+        conn.close()
+        return "<h3>Arquivo inserido com sucesso! </h3><br><a href='/'>Voltar</a>"
+    #acessar esta rota pela primeira vez (sem post) cai nesse html
+    return '''
+        <h2>Upload da tabela Avengers</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="arquivo" accept=".csv"><br>
+            <input type="submit" value="-- Enviar --">
+        </form>
+    '''
 #iniciar o servidor 
 if __name__ == '__main__':
     app.run(debug=True)
