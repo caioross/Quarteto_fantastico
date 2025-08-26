@@ -17,6 +17,7 @@ headers = {
 baseURL = "https://www.adorocinema.com/filmes/melhores/"
 filmes = [] #lista que vai armazenar os dados coletados de cada filme
 data_hoje = datetime.date.today().strftime("%d-%m-%Y")
+agora = datetime.datetime.now()
 paginaLimite = 5 #quantidade de paginas
 card_temp_min = 1
 card_temp_max = 3
@@ -25,7 +26,7 @@ pag_temp_max = 5
 bancoDados = "C:/Users/integral/Desktop/Python 2 Caio/banco_filmes.db"
 saidaCSV = f"filmes_adorocinema_{data_hoje}.csv"
 
-for pagina in range(1,paginaLimite):
+for pagina in range(1,paginaLimite + 1):
     url = f"{baseURL}?page={pagina}"
     print(f"Coletando dados da pagina {pagina} : {url}")
     resposta = requests.get(url, headers=headers)
@@ -68,7 +69,7 @@ for pagina in range(1,paginaLimite):
             genero_block = filme_soup.find("div", class_="meta-body-info")
             if genero_block :
                 generos_links = genero_block.find_all("a")
-                generos = [g.txt.strip() for g in generos_links]
+                generos = [g.text.strip() for g in generos_links]
                 categoria = ", ".join(generos[:3]) if generos else "N/A"
             else:
                 categoria ="N/A"
@@ -97,3 +98,53 @@ for pagina in range(1,paginaLimite):
             print(f'Tempo de espera: {tempo}')
         except Exception as e:
             print(f"Erro ao processar o filme {titulo}. Erro: {e}")
+    #esperar um tempo entre uma pagina e outra
+    tempo = random.uniform(pag_temp_min,pag_temp_max)
+    time.sleep(tempo)
+
+#converter os dados coletados para um dataframe do pandas
+df = pd.DataFrame(filmes)
+print(df.head())
+
+#salva os dados em um arquivo csv
+df.to_csv(saidaCSV, index=False, encoding="utf-8-sig", quotechar="'", quoting=1)
+
+#conecta um banco de dados SQLite (cria se nao existir)
+conn = sqlite3.connect(bancoDados)
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS filmes(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        Titulo TEXT,
+        Direcao TEXT,
+        Nota REAL,
+        Link TEXT,
+        Ano TEXT,
+        Categoria TEXT
+               )
+''')
+
+# inserir cada filme coletado dentro da tabela no banco de dados
+for filme in filmes:
+    try:
+        cursor.execute('''
+            INSERT INTO filmes (Titulo, Direcao, Nota, Link, Ano, Categoria) VALUES (?,?,?,?,?,?)
+    ''',(
+        filme['Titulo'],
+        filme['Direção'],
+        float(filme['Nota']) if filme['Nota'] != 'N/A' else None,
+        filme['Link'],
+        filme['Ano'],
+        filme['Categoria']
+    ))
+    except Exception as e:
+        print(f"Erro ao inserir filme {filme['Titulo']} no banco de dados. Código de identificação do erro: {e}.")
+conn.commit()
+conn.close()
+
+print("---------------------------------------")
+print('Dados raspados e salvos com sucesso!')
+print(f"\n Arquivo salvo em: {saidaCSV} \n")
+print("Obrigado por usar o Sistema de Bot do Seu nome")
+print(f"Finalizado em: {agora.strftime("%H:%M:%S")}")
+print("---------------------------------------")
