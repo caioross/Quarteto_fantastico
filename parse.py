@@ -20,14 +20,14 @@ def interpretador(codigo):
 
         #se for uma linha de definir
         if linha.startswith("definir"):
-            partes = linha[8:].strip().split(" como ") #pega o nome da variavel e o valor
+            partes = linha[7:].strip().split(" como ") #pega o nome da variavel e o valor
             nome = partes[0].strip()
             valor = partes[1].strip().strip('"') #remove as aspas
             variaveis[nome] = valor #armazenando a variavel 
 
         #se for uma linha de mostrar
         elif linha.startswith("mostrar"):
-            conteudo = linha[8:].strip().strip('"')
+            conteudo = linha[7:].strip().strip('"')
             print(conteudo)
 
         #se for uma estrutura condicional (se)
