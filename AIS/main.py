@@ -324,8 +324,8 @@ def correlacao():
     fig.update_layout(
         title = {
             'text':f'<b>Correlação entre Selic e Inadimplencia</b><br><span style="font-size:16px">Coeficiente de Correlação: {correl:.2f}</span>',
-            'y':'0.95', # posição vertical do titulo (95% da altura do grafico)
-            'x':'0.5', # posição horizontal do titulo (50% da altura do grafico)
+            'y':0.95, # posição vertical do titulo (95% da altura do grafico)
+            'x':0.5, # posição horizontal do titulo (50% da altura do grafico)
             'xanchor':'center', #alinha o titulo horizontalmente ao centro
             'yanchor':'top' # alinha o titulo verticalmente ao topo
         },
