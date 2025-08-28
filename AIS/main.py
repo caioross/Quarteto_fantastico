@@ -152,7 +152,7 @@ def graficos():
         yaxis_title = '%',
         template = 'plotly_dark'
     )
-
+ #https://cubovelocidade.com.br/tutoriais/
     fig2 = go.Figure()
     fig2.add_trace(go.Scatter(
             x = selic_df['mes'],
@@ -406,11 +406,40 @@ def correlacao():
                     <h1>Correlação entre Selic e Inadimplencia</h1>
                     <div>{{ grafico|safe }}</div>
                     <br>
-                    <div><a href="{voltar}">Voltar</a></div>
+                    <div><a href="{{voltar}}">Voltar</a></div>
                 </div>
             </body>
         </html>
     ''', grafico = graph_html, voltar = rotas[0])
+
+@app.route(rotas[6])
+def insights_3d():
+    with sqlite3.connect(caminhoBd) as conn:
+        inad_df = pd.read_sql_query("SELECT * FROM inadimplencia", conn)
+        selic_df = pd.read_sql_query("SELECT * FROM selic", conn)
+
+    
+
+    return render_template_string('''
+        <html>
+            <head>
+                <title>Insights Economicos</title>
+                <style>
+                    body{font-family:Arial; background-color: #f8f9fa; color:#222; text-align:center;}
+                    a{text-decoration:none; color: #007bff}
+                    a:hover{text-decoration:underline;}
+                </style>
+            </head>
+            <body>
+                <div>
+                    <h1>Grafico 3D com Insights Economicos</h1>
+                    <p>Analise visual com clusters, tendencias e plano de regressão.</p>
+                    <div>{{ grafico|safe }}</div>
+                    <br><div><a href="{{voltar}}">Voltar</a></div>
+                </div>
+            </body>
+        </html>
+    ''', grafico = graph_html , voltar = rotas[0])
 
 
 
