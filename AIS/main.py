@@ -439,7 +439,7 @@ def insights_3d():
     scaler_features = scaler.fit_transform(features) #aplica a normalização
 
     #executa o algoritmo do kmeans com 3 clusters (grupos) distintos. Isso vai rotular cada mês com um numero de cluster, agrupando meses similares
-    kmeans = KMeans(n_cluster=3, random_state=42, n_init=10)
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
     merged['cluster'] = kmeans.fit_predict(scaler_features) #adiciona as colunas co os clusters selecionados
 
     # prepara os dados de entrada para o calculo de uma regressão linear multipla, a ideia é encontrar um plano que melhor se ajusta aos pontos 3d do grafico
@@ -466,7 +466,7 @@ def insights_3d():
         30
         )
     xi, yi = np.meshgrid(xi,yi) #gera todas as combinações possiveis entre os valores de xi e yi 
-    zi = coeffs[0] * xi + coeffs[2] # aplica a equação do ´lano para gerar os valores z(inadimplencia)
+    zi = coeffs[0] * xi + coeffs[1] * yi + coeffs[2] # aplica a equação do ´lano para gerar os valores z(inadimplencia)
 
     # crie o grafico 3d com informações extras ao passar o mouse sobre os pontos
 
@@ -523,12 +523,12 @@ def insights_3d():
             xaxis = dict(
                 title = 'Tempo (Meses)',
                 tickvals = merged['mes_idx'],
-                tecktext = merged['mes']
+                ticktext = merged['mes']
             ),
             yaxis = dict(title = 'SELIC (%)'),
             zaxis = dict(title = 'Inadimplencia (%)')
         ),
-        title = 'Insights Economicos 3D com Tendencia, Derivadas e CLusters',
+        title = 'Insights Economicos 3D com Tendencia, Derivadas e Clusters',
         margin = dict(l=0, r=0, t=50, b=0),
         height = 800
     )
