@@ -413,6 +413,7 @@ def correlacao():
     ''', grafico = graph_html, voltar = rotas[0])
 
 
+
 if __name__ == '__main__':
     init_db()
     app.run(
