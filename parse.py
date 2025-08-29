@@ -8,36 +8,55 @@
 # Versão: 1.0
 # Data: 28-08-2025
 
-def interpretador(codigo):
+def interpretador(codigo, variaveis=None):
     # quebra o codigo em linhas
+    if variaveis is None:
+        #um dicionario para armazenar as variaveis
+        variaveis = {}
+
+    def eval_texto(expr):
+        partes = [p.strip() for p in expr.split("+")]
+        out = ""
+        for p in partes:
+            if len(p) >= 2 and p[0] == '"':
+                out += p[1:-1] #trecho entre as aspas
+            else:
+                out += str(variaveis.get(p, p)) # variavel (literal se nao existir)
+        return out
     linhas = codigo.split('\n')
-
-    #um dicionario para armazenar as variaveis
-    variaveis = {}
-
     for linha in linhas:
         linha = linha.strip() # remove espaços desnecessarios
+        if not linha: #ignora linhas vazias
+            continue
 
         #se for uma linha de definir
         if linha.startswith("definir"):
-            partes = linha[7:].strip().split(" como ") #pega o nome da variavel e o valor
-            nome = partes[0].strip()
-            valor = partes[1].strip().strip('"') #remove as aspas
-            variaveis[nome] = valor #armazenando a variavel 
-
+            resto = linha[7:].strip()
+            if ' como ' not in resto:
+                print(f"Erro de sintaxe: {linha}")
+                continue
+            nome, valor = resto.split(" como ", 1) 
+            nome = nome.strip()
+            valor = valor.strip()
+            if len(valor) >= 2 and valor[0] == '"' and valor[1] == '"':
+                valor = valor [1:-1]
+            variaveis[nome] = valor
+        
         #se for uma linha de mostrar
         elif linha.startswith("mostrar"):
-            conteudo = linha[7:].strip().strip('"')
-            print(conteudo)
+            conteudo = linha[7:].strip()
+            print(eval_texto(conteudo))
 
         #se for uma estrutura condicional (se)
         elif linha.startswith("se"):
-            condicao = linha[3:].split(" então ")[0].strip()
-            comando = linha.split(" então ")[1].strip()
-
+            resto = linha[3:].strip()
+            if " então " not in resto:
+                print(f"Erro de sintaxe: {linha}")
+                continue
+            condicao, comando = resto.split(" então ", 1)
             #aqui podemos apenas checar se a condição pé verdadeira ou falsa
-            if condicao == "verdadeiro":
-                interpretador(comando) #executa o comando dentro da condição
+            if condicao.strip() == "verdadeiro":
+                interpretador(comando.strip(), variaveis) #executa o comando dentro da condição
 
         #se for um laço "enquanto"
         elif linha.startswith("enquanto"):
