@@ -3,15 +3,15 @@
 # | | | | | | |/ _` | '__| __/ _ \ __/ _ \ 
 # | |_| | |_| | (_| | |  | ||  __/ || (_) |
 #  \__\_\\__,_|\__,_|_|   \__\___|\__\___/ 
-# Linguagem: Quarteto Language
-# Autor: Seu nome
-# Versão: 1.0
-# Data: 28-08-2025
+#Linguagem: Quarteto
+#Autor:
+#Versão 28-08-2025
+#Data: 28-08-2025
 
 def interpretador(codigo, variaveis=None):
-    # quebra o codigo em linhas
+    #quebra o código em linhas
     if variaveis is None:
-        #um dicionario para armazenar as variaveis
+        #Um dicionário para armazenar as variáveis
         variaveis = {}
 
     def eval_texto(expr):
@@ -21,76 +21,76 @@ def interpretador(codigo, variaveis=None):
             if len(p) >= 2 and p[0] == '"':
                 out += p[1:-1] #trecho entre as aspas
             else:
-                out += str(variaveis.get(p, p)) # variavel (literal se nao existir)
+                out += str(variaveis.get(p,p)) # variavel (literal se nao existir)
         return out
     linhas = codigo.split('\n')
     for linha in linhas:
-        linha = linha.strip() # remove espaços desnecessarios
+        linha = linha.strip() #Remove qualquer espaço desnecessário
         if not linha: #ignora linhas vazias
             continue
 
-        #se for uma linha de definir
-        if linha.startswith("definir"):
+        #Se for uma linha de definir
+        if linha.startswith("definir"): 
             resto = linha[7:].strip()
-            if ' como ' not in resto:
-                print(f"Erro de sintaxe: {linha}")
+            if " como " not in resto:
+                print(f"Erro de sintaxe: {linha}") #pega o nome da variável e o valor
                 continue
-            nome, valor = resto.split(" como ", 1) 
+            nome, valor = resto.split(" como ", 1)
             nome = nome.strip()
             valor = valor.strip()
-            if len(valor) >= 2 and valor[0] == '"' and valor[1] == '"':
+            if len(valor) >= 2 and valor [0] == '"' and valor[1] == '"':
                 valor = valor [1:-1]
-            variaveis[nome] = valor
-        
-        #se for uma linha de mostrar
+            variaveis[nome] = valor           
+
+        #Se for uma linha de mostrar
         elif linha.startswith("mostrar"):
             conteudo = linha[7:].strip()
             print(eval_texto(conteudo))
 
-        #se for uma estrutura condicional (se)
+        #Se for uma estrutura condicional (se)
         elif linha.startswith("se"):
             resto = linha[3:].strip()
             if " então " not in resto:
-                print(f"Erro de sintaxe: {linha}")
+                print(f"Erro de sintaxe: {linha}") #pega o nome da variável e o valor
                 continue
-            condicao, comando = resto.split(" então ", 1)
-            #aqui podemos apenas checar se a condição pé verdadeira ou falsa
+            condicao, comando = resto.split(" então ", 1)                
+            #Aqui podemos apenas checar se a condição é verdadeira ou falsa
             if condicao.strip() == "verdadeiro":
-                interpretador(comando.strip(), variaveis) #executa o comando dentro da condição
+                interpretador(comando.strip(), variaveis) #Executa o comando dentro da condição
 
-        #se for um laço "enquanto"
+        #Se for um laço "Enquanto"
         elif linha.startswith("enquanto"):
             condicao = linha[8:].split(" faça ")[0].strip()
             comando = linha.split(" faça ")[1].strip()
 
-            #verifica a condição do looping (por enquanto , consideramos verdadeiro ou falso)
+            #Verifica a condição do looping (por enquanto, consideramos verdadeiro ou falso)
             while condicao == 'verdadeiro':
-                interpretador(comando) # executa o comando dentro do loop
-                break # evita loops infinitos para esse exemplo
+                interpretador(comando) #executa o comando dentro do loop
+                break #evita looks infinitos para esse exemplo
+
         else:
-            print(f'Comando não foi reconhecido{linha}')
-
-
+            print(f'Comando não foi reconhecido {linha}')
 
 codigo_exemplo = """
     definir nome como "lalala"
-    mostrar "O nome é" + nome    
+    mostrar "O nome é" + nome
     se verdadeiro então mostrar "Isso é verdadeiro"
     enquanto verdadeiro faça mostrar "Dentro do laço"
 """
-escolha = input("Digite 1 para rodar o codigo de exemplo ou 2 para digitar o seu proprio codigo")
 
+escolha = input("digite 1 para rodar o codigo de exemplo ou 2 para digitar o seu proprio codigo)" \
+"")
 if escolha == "1":
     interpretador(codigo_exemplo)
 elif escolha == "2":
-    print("Digite seu codigo (linha a linha). Para terminar deixe a linha em branco e pressione enter ou digite 'fim'")
+    print("Digite seu código (linha a linha). Para terminar deixe a linha em branco e pressione enter ou digite 'fim'")
     linhas = []
     while True:
         linha = input()
-        if not linha or linha.strip().upper() == "FIM":
+        if not linha or linha.strip().upper == "FIM":
             break
         linhas.append(linha)
     codigo_usuario = "\n".join(linhas)
     interpretador(codigo_usuario)
-else: 
-    print("Opção invalida!")
+else:
+    print("Opção Invalida!")
